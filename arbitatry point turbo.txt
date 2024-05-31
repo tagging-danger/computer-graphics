@@ -1,0 +1,56 @@
+#include <graphics.h>
+#include <math.h>
+
+void rotate(int x, int y, int cx, int cy, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+
+    // translate point back to origin
+    x -= cx;
+    y -= cy;
+
+    // rotate point
+    float xnew = x * c - y * s;
+    float ynew = x * s + y * c;
+
+    // translate point back
+    x = xnew + cx;
+    y = ynew + cy;
+
+    // plot the rotated point
+    putpixel(x, y, WHITE);
+}
+
+int main() {
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, "");
+
+    // get user input for line coordinates and center of rotation
+    int x1, y1, x2, y2, cx, cy;
+    float angle;
+    printf("Enter the coordinates of the line (x1 y1 x2 y2): ");
+    scanf("%d %d %d %d", &x1,y1, &x2, &y2);
+    printf("Enter the center of rotation (cx cy): ");
+    scanf("%d %d", &cx, &cy);
+    printf("Enter the angle of rotation in degrees: ");
+    scanf("%f", &angle);
+
+    // convert angle to radians
+    angle = angle * M_PI / 180;
+
+    // draw the original line
+    line(x1, y1, x2, y2);
+
+    // rotate the line about the center of rotation
+    for (int x = x1; x <= x2; x++) {
+        for (int y = y1; y <= y2; y++) {
+            if (getpixel(x, y) == WHITE) {
+                rotate(x, y, cx, cy, angle);
+            }
+        }
+    }
+
+    getch();
+    closegraph();
+    return 0;
+}

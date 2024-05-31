@@ -1,0 +1,280 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <graphics.h>
+#include <math.h>
+
+typedef struct Points
+{
+    int x;
+    int y;
+} _Polygon;
+
+struct Node
+{
+    short int x;
+    short int y;
+    struct Node *next;
+};
+
+int nodesCount;
+
+void flood(int, int, int);
+int isValid(int, int, int);
+void bresenhamLine(int, int, int, int);
+
+void push(struct Node **, int x, int y);
+int isEmpty(struct Node *);
+struct Node *peek(struct Node *);
+void pop(struct Node **);
+
+int main()
+{
+    int gd = DETECT, gm;
+    initwindow(640, 480);
+
+    int points;
+    int i, a, b;
+    int colour;
+    int x, y;
+    int mode;
+
+    fputs("How many points do you want?(> 2): ", stdout);
+    scanf("%d", &points);
+    getchar();
+
+    _Polygon *shape = (_Polygon *)malloc(points * sizeof(_Polygon));
+
+    for (i = 0; i < points; i++)
+    {
+        fprintf(stdout, "Enter point %d: ", i + 1);
+        scanf("%d %d", &a, &b);
+        shape[i].x = a;
+        shape[i].y = b;
+        getchar();
+    }
+
+    fputs("Enter colour no.: ", stdout);
+    scanf("%d", &colour);
+    getchar();
+
+    fputs("Enter seed co-ordinates: ", stdout);
+    scanf("%d %d", &x, &y);
+    getchar();
+
+    cleardevice();
+
+    setcolor(RED);
+
+    for (i = 0; i < points; i++)
+        bresenhamLine(shape[i].x, shape[i].y, shape[(i + 1) % points].x, shape[(i + 1) % points].y);
+
+    flood(x, y, colour);
+    getchar();
+
+    free(shape);
+
+    closegraph();
+    return 0;
+}
+
+void flood(int x, int y, int colour)
+{
+    struct Node *stack = NULL;
+    push(&stack, x, y);
+
+    int bgcolour = getpixel(x, y);
+
+    putpixel(x, y, colour);
+
+    struct Node *temp = NULL;
+    int posX, posY;
+
+    while (nodesCount > 0)
+    {
+        temp = peek(stack);
+
+        posX = temp->x;
+        posY = temp->y;
+
+        pop(&stack);
+
+        if (isValid(posX + 1, posY, bgcolour))
+        {
+            putpixel(posX + 1, posY, colour);
+            push(&stack, posX + 1, posY);
+        }
+
+        if (isValid(posX, posY + 1, bgcolour))
+        {
+            putpixel(posX, posY + 1, colour);
+            push(&stack, posX, posY + 1);
+        }
+
+        if (isValid(posX - 1, posY, bgcolour))
+        {
+            putpixel(posX - 1, posY, colour);
+            push(&stack, posX - 1, posY);
+        }
+
+        if (isValid(posX, posY - 1, bgcolour))
+        {
+            putpixel(posX, posY - 1, colour);
+            push(&stack, posX, posY - 1);
+        }
+    }
+
+    while (!isEmpty(stack))
+    {
+        pop(&stack);
+    }
+
+    free(stack);
+    free(temp);
+}
+
+int isValid(int x, int y, int checkC)
+{
+    if (x < 0 || x > getmaxy() || y < 0 || y > getmaxy() || getpixel(x, y) != checkC)
+        return 0;
+
+    return 1;
+}
+
+void bresenhamLine(int x1, int y1, int x2, int y2)
+{
+    int color = getcolor();
+    int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+    dx = x2 - x1;
+    dy = y2 - y1;
+    dx1 = abs(dx);
+    dy1 = abs(dy);
+    px = 2 * dy1 - dx1;
+    py = 2 * dx1 - dy1;
+
+    if (dy1 <= dx1)
+    {
+        if (dx >= 0)
+        {
+            x = x1;
+            y = y1;
+            xe = x2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            xe = x1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; x < xe; i++)
+        {
+            x = x + 1;
+            if (px < 0)
+            {
+                px = px + 2 * dy1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    y = y + 1;
+                }
+                else
+                {
+                    y = y - 1;
+                }
+                px = px + 2 * (dy1 - dx1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+    else
+    {
+        if (dy >= 0)
+        {
+            x = x1;
+            y = y1;
+            ye = y2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            ye = y1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; y < ye; i++)
+        {
+            y = y + 1;
+            if (py <= 0)
+            {
+                py = py + 2 * dx1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    x = x + 1;
+                }
+                else
+                {
+                    x = x - 1;
+                }
+                py = py + 2 * (dx1 - dy1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+}
+
+void push(struct Node **top, int x, int y)
+{
+    struct Node *node = NULL;
+    node = (struct Node *)malloc(sizeof(struct Node));
+    if (!node)
+    {
+        fputs("Overflow\n", stdout);
+        getchar();
+        exit(EXIT_FAILURE);
+    }
+    node->x = x;
+    node->y = y;
+    node->next = *top;
+    *top = node;
+    nodesCount += 1;
+}
+
+int isEmpty(struct Node *top)
+{
+    return top == NULL;
+}
+
+struct Node *peek(struct Node *top)
+{
+    if (!isEmpty(top))
+    {
+        return top;
+    }
+    else
+    {
+        fputs("Empty\n", stdout);
+        getchar();
+        exit(EXIT_FAILURE);
+        return top;
+    }
+}
+
+void pop(struct Node **top)
+{
+    struct Node *node;
+    if (*top == NULL)
+    {
+        fputs("Underflow\n", stdout);
+        getchar();
+        exit(EXIT_FAILURE);
+    }
+    node = *top;
+    *top = (*top)->next;
+    nodesCount -= 1;
+    free(node);
+}

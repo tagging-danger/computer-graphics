@@ -1,0 +1,144 @@
+#include <conio.h>
+#include <graphics.h>
+#include <stdio.h>
+#include <stdlib.h>
+//#include "line_drawing.h"
+
+#define abs(x) ((x < 0) ? -x : x)
+#define min(a, b) ((a < b) ? a : b)
+#define max(a, b) ((a > b) ? a : b)
+
+#define WIDTH getmaxx()
+#define HEIGHT getmaxy()
+
+int sigmoid(int val) {
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+void swap(int *a, int *b) {
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+int points[10][2], n;
+
+void edge(int border, int replacement) {
+    for (int i = 0; i < n - 1; i++) {
+        int x1 = points[i][0];
+        int y1 = points[i][1];
+
+        int x2 = points[i + 1][0];
+        int y2 = points[i + 1][1];
+
+        if (y1 > y2) {
+            int temp = x1;
+            x1 = x2;
+            x2 = temp;
+
+            temp = y1;
+            y1 = y2;
+            y2 = temp;
+        }
+
+        int x = x1;
+        int y = y1;
+
+        double _x = x;
+        double m = (y2 - y1);
+        int ychange = sigmoid(y2 - y);
+
+        if (x2 != x1 && m != 0.0f)
+            m /= x2 - x1;
+
+        while (y != y2) {
+            while (x < WIDTH) {
+                int now_pixel = getpixel(x, y);
+
+                if (now_pixel == getbkcolor())
+                    putpixel(x, y, replacement);
+                else
+                    putpixel(x, y, getbkcolor());
+
+                x++;
+            }
+
+            _x += 1.0 / m;
+            x = _x;
+            y += ychange;
+        }
+    }
+
+    // repeating the code so it works for edge between last vertex and first vertex
+
+    int x1 = points[0][0];
+    int y1 = points[0][1];
+
+    int x2 = points[n - 1][0];
+    int y2 = points[n - 1][1];
+
+    if (y1 > y2) {
+        int temp = x1;
+        x1 = x2;
+        x2 = temp;
+
+        temp = y1;
+        y1 = y2;
+        y2 = temp;
+    }
+
+    int x = x1;
+    int y = y1;
+
+    double _x = x;
+    double m = (y2 - y1);
+    int ychange = sigmoid(y2 - y);
+
+    if (x2 != x1)
+        m /= x2 - x1;
+
+    while (y != y2) {
+        while (x < WIDTH) {
+            int now_pixel = getpixel(x, y);
+
+            if (now_pixel == getbkcolor())
+                putpixel(x, y, replacement);
+            else
+                putpixel(x, y, getbkcolor());
+
+            x++;
+        }
+
+        _x += 1.0 / m;
+        x = _x;
+        y += ychange;
+    }
+}
+
+int main() {
+    int gd = DETECT, gm;
+    int i, x, y;
+    initgraph(&gd, &gm, "C:\\TURBOC3\\BGI");
+
+    printf("How many vertices do you want ");
+    scanf("%d", &n);
+
+    for (i = 0; i < n; i++) {
+        printf("Enter vertices %d ", i + 1);
+        scanf("%d %d", &points[i][0], &points[i][1]);
+    }
+
+    for (i = 0; i < n - 1; i++) {
+        line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
+    }
+    line(points[n - 1][0], points[n - 1][1], points[0][0], points[0][1]);
+
+    edge(WHITE, YELLOW);
+
+    getch();
+
+    closegraph();
+    return 0;
+}

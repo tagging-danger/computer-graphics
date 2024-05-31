@@ -1,0 +1,231 @@
+#include<iostream>
+#include<graphics.h>
+#include<math.h>
+
+using namespace std;
+
+typedef struct point
+{
+    float x,y;
+} point;
+
+class Circle
+{
+    void draw(int xc,int yc,int x,int y,int clr)
+    {
+        putpixel(xc+x, yc+y, clr);
+        putpixel(xc-x, yc+y, clr);
+        putpixel(xc+x, yc-y, clr);
+        putpixel(xc-x, yc-y, clr);
+        putpixel(xc+y, yc+x, clr);
+        putpixel(xc-y, yc+x, clr);
+        putpixel(xc+y, yc-x, clr);
+        putpixel(xc-y, yc-x, clr);
+    }
+
+
+public:
+    int radius;
+    point centre;
+
+    Circle(int xCentre,int yCentre,int radius)
+    {
+        this->centre.x=xCentre;
+        this->centre.y=yCentre;
+        this->radius=radius;
+    }
+
+    void drawCircle(int clr)   //bresenham algorithm
+    {
+        int X,Y,D;
+        X = 0;
+        Y = radius;
+        D = 3 - 2*radius;
+        while(X<=Y)
+        {
+            draw(centre.x,centre.y,X,Y,clr);
+            X++;
+            if(D < 0)
+            {
+                D+=4*X+6;
+            }
+            else
+            {
+                Y--;
+                D+=4*(X-Y)+10;
+            }
+        }
+
+    }
+
+    void translateCircle(point translationVector)
+    {
+        drawCircle(BLACK);
+        centre.x+=translationVector.x;
+        centre.y+=translationVector.y;
+        drawCircle(MAGENTA);
+    }
+};
+
+class Line
+{
+private:
+    float x1,y1,x2,y2;
+    int clr;
+
+    void plot1(int x0,int y0,int x1,int y1)
+    {
+        int X,Y,dx,dy,p,yinc;
+        dx=x1-x0;
+        dy=y1-y0;
+        yinc=1;
+        if(dy<0)
+        {
+            yinc=-1;
+            dy=-dy;
+        }
+        p=(2*dy)-dx;
+        Y=y0;
+        for(X=x0; X<=x1; X++)
+        {
+            putpixel(X,Y,clr);
+            if(p>0)
+            {
+                Y+=yinc;
+                p=p+(2*(dy-dx));
+            }
+            else
+                p=p+2*dy;
+        }
+    }
+
+    void plot2(int x0,int y0,int x1,int y1)
+    {
+        int X,Y,dx,dy,p,xinc;
+        dx=x1-x0;
+        dy=y1-y0;
+        xinc=1;
+        if(dx<0)
+        {
+            xinc=-1;
+            dx=-dx;
+        }
+        p=(2*dx)-dy;
+        X=x0;
+        for(Y=y0; Y<=y1; Y++)
+        {
+            putpixel(X,Y,clr);
+            if(p>0)
+            {
+                X+=xinc;
+                p=p+(2*(dx-dy));
+            }
+            else
+                p=p+2*dx;
+        }
+    }
+
+public:
+
+    void set_attributes(point point_1,point point_2,int clr)
+    {
+        this->x1=point_1.x;
+        this->x2=point_2.x;
+        this->y1=point_1.y;
+        this->y2=point_2.y;
+        this->clr=clr;
+    }
+
+    void draw_Line()
+    {
+        if(abs(y2-y1) < abs(x2-x1))
+        {
+            //abs(slope)<1
+            if(x1>x2) //always drawn from left to right i.e. xinc is +1
+                plot1(round(x2),round(y2),round(x1),round(y1));
+            else
+                plot1(round(x1),round(y1),round(x2),round(y2));
+        }
+        else
+        {
+            //abs(slope)>1
+            if(y1>y2) //always bottom to top i.e. yinc is +1
+                plot2(round(x2),round(y2),round(x1),round(y1));
+            else
+                plot2(round(x1),round(y1),round(x2),round(y2));
+        }
+    }
+};
+
+
+void drawWindow(point windowMax,point windowMin)
+{
+    point vertex_1,vertex_2;
+    Line lineObj;
+
+    vertex_1.x=windowMin.x;
+    vertex_1.y=windowMin.y;
+    vertex_2.x=windowMax.x;
+    vertex_2.y=windowMin.y;
+    lineObj.set_attributes(vertex_1,vertex_2,WHITE);
+    lineObj.draw_Line();
+
+    vertex_1.x=windowMax.x;
+    vertex_1.y=windowMin.y;
+    vertex_2.x=windowMax.x;
+    vertex_2.y=windowMax.y;
+    lineObj.set_attributes(vertex_1,vertex_2,WHITE);
+    lineObj.draw_Line();
+
+    vertex_1.x=windowMax.x;
+    vertex_1.y=windowMax.y;
+    vertex_2.x=windowMin.x;
+    vertex_2.y=windowMax.y;
+    lineObj.set_attributes(vertex_1,vertex_2,WHITE);
+    lineObj.draw_Line();
+
+
+    vertex_1.x=windowMin.x;
+    vertex_1.y=windowMax.y;
+    vertex_2.x=windowMin.x;
+    vertex_2.y=windowMin.y;
+    lineObj.set_attributes(vertex_1,vertex_2,WHITE);
+    lineObj.draw_Line();
+
+}
+
+
+int main()
+{
+    int gd = DETECT,gm,radius;
+    point windowMax,windowMin,translationVector;
+
+    initgraph(&gd,&gm,"");
+
+    windowMax.x=600;
+    windowMax.y=400;
+    windowMin.x=10;
+    windowMin.y=10;
+    drawWindow(windowMax,windowMin);
+
+    radius=20;
+    Circle circle(40,370,radius);
+    circle.drawCircle(BLUE);
+
+    translationVector.x=4;
+    translationVector.y=2;
+
+
+    while(true)
+    {
+        circle.translateCircle(translationVector);
+        if(circle.centre.x > windowMax.x - radius - 4 || circle.centre.x < windowMin.x + radius + 4)
+            translationVector.x=-translationVector.x;
+        if(circle.centre.y > windowMax.y - radius - 2 || circle.centre.y < windowMin.y + radius + 2)
+            translationVector.y=-translationVector.y;
+        drawWindow(windowMax,windowMin);
+    }
+
+    getch();
+    closegraph();
+}

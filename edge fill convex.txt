@@ -1,0 +1,227 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <graphics.h>
+#include <math.h>
+
+typedef struct Points
+{
+    int x;
+    int y;
+} _Polygon;
+
+struct Node
+{
+    short int x;
+    short int y;
+    struct Node *next;
+};
+
+int nodesCount;
+
+void edge(_Polygon **, int, int, int);
+void bresenhamLine(int, int, int, int);
+
+int main()
+{
+    int gd = DETECT, gm;
+    initwindow(640, 480);
+
+    int points;
+    int i, a, b;
+    int colour, boundaryColour;
+    int mode;
+
+    fputs("How many points do you want?(> 2): ", stdout);
+    scanf("%d", &points);
+    getchar();
+
+    _Polygon *shape = (_Polygon *)malloc(points * sizeof(_Polygon));
+
+    for (i = 0; i < points; i++)
+    {
+        fprintf(stdout, "Enter point %d: ", i + 1);
+        scanf("%d %d", &a, &b);
+        shape[i].x = a;
+        shape[i].y = b;
+        getchar();
+    }
+
+    fputs("Enter colour no.: ", stdout);
+    scanf("%d", &colour);
+    getchar();
+
+    fputs("Enter boundary colour no.: ", stdout);
+    scanf("%d", &boundaryColour);
+    getchar();
+
+    cleardevice();
+
+    setcolor(boundaryColour);
+
+    for (i = 0; i < points; i++)
+        bresenhamLine(shape[i].x, shape[i].y, shape[(i + 1) % points].x, shape[(i + 1) % points].y);
+
+    edge(&shape, points, colour, boundaryColour);
+    getchar();
+
+    free(shape);
+
+    closegraph();
+    return 0;
+}
+
+void edge(_Polygon **shape, int size, int colour, int boundaryColour)
+{
+    float m, x1, y1, x2, y2, x;
+    int i = 0, t = 1;
+
+    int oldsize = size;
+
+    while (size--)
+    {
+        if ((i + 1) == oldsize)
+        {
+            t = -i;
+        }
+        if ((*shape)[i].y < (*shape)[i + t].y)
+        {
+            x1 = (*shape)[i].x;
+            y1 = (*shape)[i].y;
+            x2 = (*shape)[i + t].x;
+            y2 = (*shape)[i + t].y;
+        }
+        else
+        {
+            x1 = (*shape)[i + t].x;
+            y1 = (*shape)[i + t].y;
+            x2 = (*shape)[i].x;
+            y2 = (*shape)[i].y;
+        }
+
+        if ((x2 - x1) == 0)
+        {
+            m = 0;
+        }
+
+        else if ((y2 - y1) == 0)
+        {
+            m = 1;
+        }
+
+        else
+        {
+            m = (float)(x2 - x1) / (y2 - y1);
+        }
+
+        while (y1 <= (y2 - 1))
+        {
+            y1++;
+            x1 += m;
+            x = x1 + 1;
+
+            while (x <= getmaxx() + 1)
+            {
+                if (getpixel(x, y1) == BLACK && getpixel(x, y1) != boundaryColour)
+                {
+                    putpixel(x, y1, colour);
+                }
+                else
+                {
+                    if (getpixel(x, y1) != boundaryColour)
+                        putpixel(x, y1, BLACK);
+                }
+
+                x++;
+            }
+        }
+
+        i++;
+    }
+}
+
+void bresenhamLine(int x1, int y1, int x2, int y2)
+{
+    int color = getcolor();
+    int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+    dx = x2 - x1;
+    dy = y2 - y1;
+    dx1 = abs(dx);
+    dy1 = abs(dy);
+    px = 2 * dy1 - dx1;
+    py = 2 * dx1 - dy1;
+
+    if (dy1 <= dx1)
+    {
+        if (dx >= 0)
+        {
+            x = x1;
+            y = y1;
+            xe = x2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            xe = x1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; x < xe; i++)
+        {
+            x = x + 1;
+            if (px < 0)
+            {
+                px = px + 2 * dy1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    y = y + 1;
+                }
+                else
+                {
+                    y = y - 1;
+                }
+                px = px + 2 * (dy1 - dx1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+    else
+    {
+        if (dy >= 0)
+        {
+            x = x1;
+            y = y1;
+            ye = y2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            ye = y1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; y < ye; i++)
+        {
+            y = y + 1;
+            if (py <= 0)
+            {
+                py = py + 2 * dx1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    x = x + 1;
+                }
+                else
+                {
+                    x = x - 1;
+                }
+                py = py + 2 * (dx1 - dy1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+}

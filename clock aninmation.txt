@@ -1,0 +1,173 @@
+#include <stdio.h>
+#include <math.h>
+#include <conio.h>
+#include <dos.h>
+#include <graphics.h>
+
+#define PI 3.14159265358f
+
+int WIDTH, HEIGHT;
+int centrex, centrey;
+int radius, colour;
+
+double hour_parameter, minute_parameter;
+void clrscr();
+
+#define abs(x) ((x < 0) ? -x : x)
+
+int sigmoid(int val){
+    if(val > 0) return 1;
+    if(val < 0) return -1;
+}
+
+void circle_(int cx, int cy, int r) {
+    int x = 0, y = r;
+    //cy = cy + 80;
+    int S = 3 - 2 * r;
+
+    while (x <= y) {
+        putpixel(cx + x, cx + y, WHITE);
+        putpixel(cx + x, cx - y, WHITE);
+        putpixel(cx - x, cx + y, WHITE);
+        putpixel(cx - x, cx - y, WHITE);
+
+        putpixel(cx + y, cx + x, WHITE);
+        putpixel(cx + y, cx - x, WHITE);
+        putpixel(cx - y, cx + x, WHITE);
+        putpixel(cx - y, cx - x, WHITE);
+
+        x++;
+
+        if (S <= 0) {
+            S += 4 * x + 6;
+        } else {
+            y--;
+            S += 4 * (x - y) + 10;
+        }
+    }
+}
+
+
+void bre(int x1, int y1, int x2, int y2) {
+    int x = x1, y = y1;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    int xchange = sigmoid(dx);
+    int ychange = sigmoid(dy);
+    dx = abs(dx);
+    dy = abs(dy);
+
+    int p = 2 * dy - dx;
+    int n = 0;
+
+    if (abs(dx) > abs(dy)) {
+        // for gentle slope
+        while (x != x2) {
+            putpixel(x, y, WHITE);
+            x += xchange;
+
+            if (p < 0)
+                p += 2 * dy;
+            else {
+                p += 2 * dy - 2 * dx;
+                y += ychange;
+            }
+
+            n++;
+        }
+
+    } else {
+        // for steep slope
+        while (y != y2) {
+            putpixel(x, y, WHITE);
+            y += ychange;
+
+            if (p < 0)
+                p += 2 * dx;
+            else {
+                p += 2 * dx - 2 * dy;
+                x += xchange;
+            }
+
+            n++;
+        }
+    }
+}
+
+
+char* tostr(int num){
+    switch(num){
+        case 1: return "1";
+        case 2: return "2";
+        case 3: return "3";
+        case 4: return "4";
+        case 5: return "5";
+        case 6: return "6";
+        case 7: return "7";
+        case 8: return "8";
+        case 9: return "9";
+        case 10: return "10";
+        case 11: return "11";
+        case 12: return "12";
+    }
+}
+
+// This function draws the numbers on clock
+void drawnumbers(){
+    double step = PI / 6, angle = 0;
+    for(int i = 1; i <= 12; i++){
+        outtextxy(centrex + (radius - 10) * sin(angle + step), centrey - (radius- 10) * cos(angle + step), tostr(i)); angle += step;
+    }
+}
+
+// This function draws the content of clock
+void drawclock(){
+    setcolor(LIGHTGREEN);
+    circle(centrex, centrey, radius);
+
+    setcolor(YELLOW);
+    bre(centrex, centrey, centrex + radius * sin(minute_parameter), centrey - radius * cos(minute_parameter));
+
+    setcolor(LIGHTBLUE);
+    bre(centrex, centrey, centrex + radius / 2 * sin(hour_parameter), centrey - radius / 2 * cos(hour_parameter));
+
+    if(minute_parameter >= 2 * PI){
+            hour_parameter += 30 * PI / 180;
+            minute_parameter = 0;
+    }
+}
+
+void clear() {
+    cleardevice();
+}
+
+int main() {
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, " ");
+    WIDTH = getmaxx();
+    HEIGHT = getmaxy();
+
+    centrex = WIDTH / 4;
+    centrey = HEIGHT / 4;
+    radius = 100;
+
+    minute_parameter = 0;
+    hour_parameter = 0;
+
+    while(1){
+        if(kbhit() && getch() == 0xd)
+            break;
+
+        clear();
+        drawnumbers();
+        drawclock();
+        delay(10);
+
+        // increment the minute_parameter by one radian
+        minute_parameter += PI / 180;
+    }
+
+    getch();
+    return 0;
+}

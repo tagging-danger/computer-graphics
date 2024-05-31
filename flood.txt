@@ -1,0 +1,187 @@
+#include <conio.h>
+#include <graphics.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+struct point {
+    int x, y;
+
+    point() { x = y = 0; }
+
+    point(int _x, int _y) {
+        x = _x;
+        y = _y;
+    }
+
+    point(point *p) {
+        x = p->x;
+        y = p->y;
+    }
+};
+
+struct node {
+    point val;
+    node *next;
+};
+
+struct queue {
+    point *points;
+    node *head, *tail;
+    int len;
+
+    queue() {
+        len = 0;
+        head = tail = (node *)NULL;
+    }
+
+    void enqueue(int x, int y) {
+        if (head == NULL) {
+            head = (node *)malloc(sizeof(node));
+
+            head->val.x = x;
+            head->val.y = y;
+            head->next = NULL;
+
+            tail = head;
+        }
+
+        else {
+            tail->next = (node *)malloc(sizeof(node));
+            tail = tail->next;
+            tail->val.x = x;
+            tail->val.y = y;
+        }
+
+        len++;
+    }
+
+    point dequeue() {
+        if (head == NULL) {
+            printf("Queue underflow");
+            return point(-1, -1);
+        }
+
+        node *temp = head;
+        point first = head->val;
+        head = head->next;
+        free(temp);
+
+        if (head == NULL)
+            tail = NULL;
+
+        len--;
+        return first;
+    }
+
+    point peek() {
+        return (head != NULL) ? head->val : point(-1, -1);
+    }
+};
+
+void display(queue *q) {
+    for (int i = 0; i < q->len; i++)
+        printf("(%d, %d) <-> ", q->points[i].x, q->points[i].y);
+
+    printf("\n\n");
+}
+
+void flood(int x, int y, int original, int replacement) {
+    queue q;
+    q.enqueue(x, y);
+
+    while (q.len != 0) {
+        point p(q.dequeue());
+
+        if (getpixel(p.x, p.y) == original) {
+            putpixel(p.x, p.y, replacement);
+
+            if (getpixel(p.x - 1, p.y) != replacement)
+                q.enqueue(p.x - 1, p.y);
+            if (getpixel(p.x + 1, p.y) != replacement)
+                q.enqueue(p.x + 1, p.y);
+            if (getpixel(p.x, p.y - 1) != replacement)
+                q.enqueue(p.x, p.y - 1);
+            if (getpixel(p.x, p.y + 1) != replacement)
+                q.enqueue(p.x, p.y + 1);
+        }
+    }
+}
+
+int evenodd(int sx, int sy) {
+    int counter = 0;
+    for (int I = 0; I < sx; I++) {
+        if (getpixel(I, sy) != getbkcolor())
+            counter++;
+    }
+    return counter;
+}
+
+int main() {
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, " ");
+
+    int seedx, seedy, n, i;
+    printf("Enter number of vertices");
+    scanf("%d", &n);
+    int points[10][2];
+
+    // for(i = 0; i < n; i++) {
+    //     printf("Enter vertices %d ", i+1);
+    //     scanf("%d %d", &points[i][0], &points[i][1]);
+    // }
+    n = 4;
+
+    /*
+    points[0][0] = 50;
+    points[0][1] = 50;
+
+    points[1][0] = 100;
+    points[1][1] = 50;
+
+    points[2][0] = 100;
+    points[2][1] = 100;
+
+    points[3][0] = 50;
+    points[3][1] = 100;
+
+    */
+
+    points[0][0] = 50;
+    points[0][1] = 50;
+
+    points[1][0] = 250;
+    points[1][1] = 250;
+
+    points[2][0] = 50;
+    points[2][1] = 80;
+
+    points[3][0] = 0;
+    points[3][1] = 250;
+
+    for(i = 0; i < n-1; i++) {
+        line(points[i][0], points[i][1], points[i+1][0], points[i+1][1]);
+    }
+    line(points[n-1][0], points[n-1][1], points[0][0], points[0][1]);
+
+    // rectangle(20, 20, 50, 50);
+    // rectangle(20, 20, 200, 200);
+
+    // printf("Enter seed point ");
+    // scanf("%d %d", &seedx, &seedy);
+
+    // seedx = 75, seedy = 75;
+    seedx = 50, seedy = 60;
+    
+    if (evenodd(seedx, seedy) % 2 == 1) {
+        flood(seedx, seedy, WHITE, YELLOW);
+    } else {
+        printf("Seed point lies outside the polygon");
+    }
+
+    flood(seedx, seedy, BLACK, RED);
+
+    getch();
+
+    closegraph();
+    return 0;
+}

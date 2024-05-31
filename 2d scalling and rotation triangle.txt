@@ -1,0 +1,255 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <graphics.h>
+#include <math.h>
+
+#define NewOX (getmaxx() / 2)
+#define NewOY (getmaxy() / 2)
+#define Unit 10
+
+typedef struct Points
+{
+    int x;
+    int y;
+} _Polygon;
+
+void scale(int, _Polygon **, int);
+void rotation(int, _Polygon **, int, float);
+void bresenhamLine(int, int, int, int);
+
+int main()
+{
+    int gd = DETECT, gm;
+    initwindow(640, 480);
+
+    int method;
+    int points;
+    int i, a, b;
+    int x, y;
+    int mode;
+    int rot, sc, angle;
+    float radAngle;
+
+    do
+    {
+        fputs("How many points do you want?: ", stdout);
+        scanf("%d", &points);
+        getchar();
+
+        _Polygon *shape = (_Polygon *)malloc(points * sizeof(_Polygon));
+
+        for (i = 0; i < points; i++)
+        {
+            fprintf(stdout, "Enter point %d: ", i + 1);
+            scanf("%d %d", &a, &b);
+            shape[i].x = a;
+            shape[i].y = b;
+            getchar();
+        }
+
+        fputs("\n", stdout);
+
+        fputs("\n1. Scaling\n2. Rotation\n\tEnter value: ", stdout);
+        scanf("%d", &method);
+        getchar();
+
+        if (method == 1)
+        {
+            fputs("Enter scaling value: ", stdout);
+            scanf("%d", &sc);
+            getchar();
+        }
+
+        if (method == 2)
+        {
+            fputs("\n1. Clockwise\n2. Counter Clockwise\n\tEnter value: ", stdout);
+            scanf("%d", &rot);
+            getchar();
+
+            fputs("Enter angle: ", stdout);
+            scanf("%d", &angle);
+            getchar();
+        }
+
+        cleardevice();
+
+        setcolor(WHITE);
+        bresenhamLine(NewOX, 0, NewOX, getmaxy());
+        bresenhamLine(0, NewOY, getmaxx(), NewOY);
+
+        setcolor(RED);
+        for (i = 0; i < points; i++)
+        {
+            bresenhamLine(NewOX + shape[i].x * Unit, NewOY - shape[i].y * Unit, NewOX + shape[(i + 1) % points].x * Unit, NewOY - shape[(i + 1) % points].y * Unit);
+        }
+
+        switch (method)
+        {
+        case 1:
+            scale(sc, &shape, points);
+            break;
+
+        case 2:
+            radAngle = angle * (3.14159 / 180);
+            rotation(rot, &shape, points, radAngle);
+            break;
+
+        default:
+            fputs("Entered the wrong input!", stdout);
+            break;
+        }
+
+        fputs("Press enter to continue...", stdout);
+        getchar();
+        free(shape);
+
+        cleardevice();
+
+        fputs("Do you want to exit? (1) for yes, (0) for no: ", stdout);
+        scanf("%d", &mode);
+        getchar();
+
+    } while (mode != 1);
+
+    closegraph();
+    return 0;
+}
+
+void scale(int value, _Polygon **shape, int size)
+{
+    _Polygon *resShape = (_Polygon *)malloc(size * sizeof(_Polygon));
+    int i = 0;
+
+    for (i = 0; i < size; i++)
+    {
+        resShape[i].x = (*shape)[i].x * value;
+        resShape[i].y = (*shape)[i].y * value;
+    }
+
+    setcolor(GREEN);
+
+    for (i = 0; i < size; i++)
+    {
+        bresenhamLine(NewOX + resShape[i].x * Unit, NewOY - resShape[i].y * Unit, NewOX + resShape[(i + 1) % size].x * Unit, NewOY - resShape[(i + 1) % size].y * Unit);
+    }
+
+    free(resShape);
+}
+
+void rotation(int direction, _Polygon **shape, int size, float radAngle)
+{
+    _Polygon *resShape = (_Polygon *)malloc(size * sizeof(_Polygon));
+    int i = 0;
+
+    if (direction == 1)
+    {
+        for (i = 0; i < size; i++)
+        {
+            resShape[i].y = round((float)(*shape)[i].y * cos(radAngle)) - round((float)(*shape)[i].x * sin(radAngle));
+            resShape[i].x = round((float)(*shape)[i].x * cos(radAngle)) + round((float)(*shape)[i].y * sin(radAngle));
+        }
+    }
+
+    else
+    {
+        for (i = 0; i < size; i++)
+        {
+            resShape[i].x = round((float)(*shape)[i].x * cos(radAngle)) - round((float)(*shape)[i].y * sin(radAngle));
+            resShape[i].y = round((float)(*shape)[i].x * sin(radAngle)) + round((float)(*shape)[i].y * cos(radAngle));
+        }
+    }
+
+    for (i = 0; i < size; i++)
+    {
+        bresenhamLine(NewOX + resShape[i].x * Unit, NewOY - resShape[i].y * Unit, NewOX + resShape[(i + 1) % size].x * Unit, NewOY - resShape[(i + 1) % size].y * Unit);
+    }
+
+    free(resShape);
+}
+
+void bresenhamLine(int x1, int y1, int x2, int y2)
+{
+    int color = getcolor();
+    int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+    dx = x2 - x1;
+    dy = y2 - y1;
+    dx1 = abs(dx);
+    dy1 = abs(dy);
+    px = 2 * dy1 - dx1;
+    py = 2 * dx1 - dy1;
+
+    if (dy1 <= dx1)
+    {
+        if (dx >= 0)
+        {
+            x = x1;
+            y = y1;
+            xe = x2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            xe = x1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; x < xe; i++)
+        {
+            x = x + 1;
+            if (px < 0)
+            {
+                px = px + 2 * dy1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    y = y + 1;
+                }
+                else
+                {
+                    y = y - 1;
+                }
+                px = px + 2 * (dy1 - dx1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+    else
+    {
+        if (dy >= 0)
+        {
+            x = x1;
+            y = y1;
+            ye = y2;
+        }
+        else
+        {
+            x = x2;
+            y = y2;
+            ye = y1;
+        }
+        putpixel(x, y, color);
+        for (i = 0; y < ye; i++)
+        {
+            y = y + 1;
+            if (py <= 0)
+            {
+                py = py + 2 * dx1;
+            }
+            else
+            {
+                if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+                {
+                    x = x + 1;
+                }
+                else
+                {
+                    x = x - 1;
+                }
+                py = py + 2 * (dx1 - dy1);
+            }
+            putpixel(x, y, color);
+        }
+    }
+}

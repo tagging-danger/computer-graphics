@@ -1,0 +1,525 @@
+/*
+Write a c Program to show that Reflection about a line Y=X is equivalent to reflection relative to X-axis
+followed by anticlockwise rotation of 90 degree
+
+Write a Program to implement reflections about X axis and about Y axis of a triangle
+
+Write a Program to implement reflections about origin and about a line Y = X for a triangle.
+
+*/
+
+
+#include <conio.h>
+#include <math.h>
+#include <stdio.h>
+#include <graphics.h>
+
+#define nullptr ((matrix*)0)
+
+int colour;
+
+int abs(int val) {
+    return (val < 0) ? -val : val;
+}
+
+int sigmoid(int val) {
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+void bre(int x1, int y1, int x2, int y2) {
+    int x = x1, y = y1;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    int xchange = sigmoid(dx);
+    int ychange = sigmoid(dy);
+    dx = abs(dx);
+    dy = abs(dy);
+
+    int p = 2 * dy - dx;
+    int n = 0;
+
+    if (abs(dx) > abs(dy)) {
+        // for gentle slope
+        while (x != x2) {
+            putpixel(x, y, WHITE);
+            x += xchange;
+
+            if (p < 0)
+                p += 2 * dy;
+            else {
+                p += 2 * dy - 2 * dx;
+                y += ychange;
+            }
+
+            n++;
+        }
+
+    } else {
+        // for steep slope
+        while (y != y2) {
+            putpixel(x, y, WHITE);
+            y += ychange;
+
+            if (p < 0)
+                p += 2 * dx;
+            else {
+                p += 2 * dx - 2 * dy;
+                x += xchange;
+            }
+
+            n++;
+        }
+    }
+}
+
+
+class matrix {
+   public:
+    double** val;
+    int rows, cols;
+
+    matrix(int row, int col) {
+        val = new double*[row];
+        for (int i = 0; i < row; i++) {
+            val[i] = new double[col];
+
+            for (int j = 0; j < col; j++)
+                val[i][j] = 0;
+        }
+
+        rows = row;
+        cols = col;
+    }
+
+    void flush() {
+        for (int i = 0; i < rows; i++)
+            delete[] val[i];
+        delete val;
+    }
+
+    matrix* operator*(matrix* other) {
+        if (other == nullptr || cols != other->rows) return nullptr;
+
+        int i, j, k;
+        matrix* result = new matrix(rows, other->cols);
+
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < other->cols; j++) {
+                result->val[i][j] = 0;
+                for (k = 0; k < other->rows; k++) {
+                    result->val[i][j] += val[i][k] * other->val[k][j];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ~matrix() {
+        flush();
+    }
+};
+
+// this function returns a column matrix
+matrix* col_mat(int first, int second) {
+    matrix* result = new matrix(3, 1);
+    result->val[0][0] = first;
+    result->val[1][0] = second;
+    result->val[2][0] = 1;
+    return result;
+}
+
+matrix* diag3(int sx, int sy) {
+    matrix* result = new matrix(3, 3);
+    result->val[0][0] = sx;
+    result->val[1][1] = sy;
+    result->val[2][2] = 1;
+    return result;
+}
+
+
+matrix* translate_mat(int tx, int ty) {
+    matrix* result = new matrix(3, 3);
+
+    result->val[0][0] = 1;
+    result->val[0][2] = tx;
+
+    result->val[1][1] = 1;
+    result->val[1][2] = ty;
+
+    result->val[2][2] = 1;
+
+    return result;
+}
+
+int x[10], y[10], n;
+
+
+void drawpoly(){
+    for (int i = 1; i < n; i++) {
+        bre(x[i - 1], y[i - 1], x[i], y[i]);
+    }
+    bre(x[0], y[0], x[n - 1], y[n - 1]);
+}
+
+int avgx(){
+    int avg = 0;
+    for(int i = 0; i < n; i++)
+        avg += x[i];
+    return avg / n;
+}
+
+int avgy(){
+    int avg = 0;
+    for(int i = 0; i < n; i++)
+        avg += y[i];
+    return avg / n;
+}
+
+void translate_all(int tx, int ty){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    matrix* translator = diag3(1, 1);
+    translator->val[2][0] = tx;
+    translator->val[2][1] = ty;
+
+    all_points = (*all_points) * translator;
+    delete translator;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+    }
+
+    delete all_points;
+}
+
+void reflection(char reflection_type){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    if(reflection_type == 'x') {
+        matrix* translator = diag3(1, -1);
+        translator->val[2][0] = 0;
+        translator->val[2][1] = 0;
+        all_points = (*all_points) * translator;
+        delete translator;
+    }
+    else if(reflection_type == 'y') {
+        matrix* translator = diag3(-1, 1);
+        translator->val[2][0] = 0;
+        translator->val[2][1] = 0;
+        all_points = (*all_points) * translator;
+        delete translator;
+    }
+    else if(reflection_type == 'o') {
+        matrix* translator = diag3(-1, -1);
+        translator->val[2][0] = 0;
+        translator->val[2][1] = 0;
+        all_points = (*all_points) * translator;
+        delete translator;
+    }
+    else if(reflection_type == 'r') {
+        matrix* translator = diag3(0, 0);
+        translator->val[0][1] = 1;
+        translator->val[1][0] = 1;
+        translator->val[2][0] = 0;
+        translator->val[2][1] = 0;
+        all_points = (*all_points) * translator;
+        delete translator;
+    }
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+        printf("%d %d\n", x[i], y[i]);
+    }
+
+    delete all_points;
+}
+
+
+void rotate_all(double rotation){
+    matrix* all_points = new matrix(n, 2);
+    int ax = avgx();
+    int ay = avgy();
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i] - ax;
+        all_points->val[i][1] = y[i] - ay;
+    }
+
+    matrix* trig = new matrix(2, 2);
+
+    // first column
+    trig->val[0][0] = cos(rotation);
+    trig->val[1][0] = -sin(rotation);
+
+    // second column
+    trig->val[0][1] = sin(rotation);
+    trig->val[1][1] = cos(rotation);
+
+    all_points = (*all_points) * trig;
+    delete trig;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0] + ax;
+        y[i] = all_points->val[i][1] + ay;
+    }
+
+    delete all_points;
+}
+
+void scale(double sx, double sy){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    matrix* translator = diag3(sx, sy);
+    translator->val[2][0] = 0;
+    translator->val[2][1] = 0;
+
+    all_points = (*all_points) * translator;
+    delete translator;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+    }
+
+    delete all_points;
+}
+
+void sheer_x(double b){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    matrix* translator = diag3(1, 1);
+    translator->val[1][0] = b;
+    translator->val[2][0] = 0;
+    translator->val[2][1] = 0;
+
+    all_points = (*all_points) * translator;
+    delete translator;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+    }
+
+    delete all_points;
+}
+
+void sheer_y(double a){
+    matrix* all_points = new matrix(n, 3);
+    int i;
+    for(i = 0; i < n; i++){
+        all_points->val[i][0] = x[i];
+        all_points->val[i][1] = y[i];
+        all_points->val[i][2] = 1;
+    }
+
+    matrix* translator = diag3(1, 1);
+    translator->val[0][1] = a;
+    translator->val[1][0] = 0;
+    translator->val[2][0] = 0;
+    translator->val[2][1] = 0;
+
+    all_points = (*all_points) * translator;
+    delete translator;
+
+    for(i = 0; i < n; i++){
+        x[i] = all_points->val[i][0];
+        y[i] = all_points->val[i][1];
+    }
+
+    delete all_points;
+}
+
+/*
+matrix* xshear(matrix* original, double h, bool remove_original = true){
+    matrix* shear_mat = diag3(1, 1);
+    shear_mat->val[0][1] = h;
+
+    matrix* result = *shear_mat * original;
+
+    delete shear_mat;
+    if(remove_original)
+        delete original;
+
+    return result;
+}
+
+
+matrix* yshear(matrix* original, double h, bool remove_original = true){
+    matrix* shear_mat = diag3(1, 1);
+    shear_mat->val[1][0] = h;
+
+    matrix* result = *shear_mat * original;
+
+    delete shear_mat;
+    if(remove_original)
+        delete original;
+
+    return result;
+} */
+
+void toreal_all(int width, int height){
+    for(int i = 0; i < n; i++){
+        x[i] += width / 2;
+        y[i] = height / 2 - y[i];
+    }
+}
+
+void totheory_all(int width, int height){
+    for(int i = 0; i < n; i++){
+        x[i] -= width / 2;
+        y[i] = height / 2 - y[i];
+    }
+}
+
+
+
+int main() {
+    int gd = DETECT, gm;
+    initgraph(&gd, &gm, " ");
+
+    int WIDTH = getmaxx();
+    int HEIGHT = getmaxy();
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    int i, choice;
+
+    printf("Enter the coordinates\n");
+    for(i = 0; i < n; i++){
+        printf("x%d: ", i + 1);
+        scanf("%d", &x[i]);
+        printf("y%d: ", i + 1);
+        scanf("%d", &y[i]);
+    }
+
+    bre(WIDTH/2, 0, WIDTH/2, HEIGHT);
+    bre(0, HEIGHT/2, WIDTH, HEIGHT/2);
+
+    // offsetting the points so
+    // centre of screen becomes the origin
+    toreal_all(WIDTH, HEIGHT);
+    outtextxy(100, 10, "Original Polygon");
+    drawpoly();
+
+    menu:
+    printf("\n\nMenu\n");
+    printf("1. Scale\n2. Reflect\n3. Sheer\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
+
+    switch(choice){
+        case 1:
+            double sx, sy;
+            printf("Enter the scaling factor in x-axis: ");
+            scanf("%lf", &sx);
+            printf("Enter the scaling factor in x-axis: ");
+            scanf("%lf", &sy);
+
+            totheory_all(WIDTH, HEIGHT);
+            scale(sx, sy);
+            toreal_all(WIDTH, HEIGHT);
+
+            outtextxy(100, 350, "After Scaling");
+            drawpoly();
+
+            break;
+
+        case 2:
+            char ref;
+            fflush(stdin);
+            printf("\nEnter where you want to reflect (x,y,o,r)\n");
+            printf("x -> x-axis\n");
+            printf("y -> y-axis\n");
+            printf("o -> origin\n");
+            printf("r -> line x = y\n");
+
+            scanf("%c", &ref);
+
+            if(!(ref == 'x' || ref == 'y' || ref == 'o'|| ref == 'r')) {
+                    printf("Not a valid axis\n");
+                    break;
+            }
+
+            totheory_all(WIDTH, HEIGHT);
+            reflection(ref);
+            toreal_all(WIDTH, HEIGHT);
+
+            outtextxy(100, 350, "After Reflection");
+            drawpoly();
+
+            break;
+
+        case 3:
+            double a, b;
+            char choice;
+            fflush(stdin);
+            printf("\nEnter which sheer you want to perform (x,y,b)\n");
+            printf("x -> x-axis\n");
+            printf("y -> y-axis\n");
+
+            scanf("%c", &choice);
+
+            if(!(choice == 'x' || choice == 'y')) {
+                    printf("Not a valid axis\n");
+                    break;
+            }
+
+
+            totheory_all(WIDTH, HEIGHT);
+            if (choice == 'x') {
+                printf("Enter the sheering factor: ");
+                scanf("%lf", &b);
+                sheer_x(b);
+            }
+            else if (choice == 'y'){
+                printf("Enter the sheering factor: ");
+                scanf("%lf", &a);
+                sheer_y(a);
+            }
+
+            toreal_all(WIDTH, HEIGHT);
+
+            outtextxy(100, 350, "After Sheering");
+            drawpoly();
+
+            break;
+
+        default:
+            printf("Please enter a valid choice!");
+            goto menu;
+    }
+
+    getch();
+    return 0;
+}

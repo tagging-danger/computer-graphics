@@ -1,0 +1,260 @@
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <dos.h>
+#include <math.h>
+#include "LINE.H"
+#include "CIRCLE.H"
+#define PI 3.14
+typedef struct
+{
+int op;
+int x = 0, y = 0;
+int r;
+} dfile;
+typedef struct seg
+{
+int start;
+int size;
+int visible;
+} seg;
+int penx, peny;
+int pivotx, pivoty;
+int xmax, ymax;
+int xsign = -1, ysign = 1;
+double thetamax, theta;
+double len = 260;
+double omega;
+double decr;
+void displayfile();
+void dfileinterpret(seg, dfile[], bool);
+void swing(dfile[]);
+int main()
+{
+int gd = DETECT, gm;
+initgraph(&gd, &gm, "C:\\TURBOC3\\BGI");
+thetamax = 60 * PI / 180;
+pivotx = getmaxx() / 2;
+pivoty = 30;
+ymax = (int)(pivoty + len * cos(thetamax));
+xmax = (int)(pivotx + len * sin(thetamax));
+theta = thetamax;
+displayfile();
+return 0;
+}
+void displayfile()
+{
+seg s[3];
+dfile d[10];
+/ anchor ball
+d[0].op = 1;
+d[0].x = 319;
+d[0].y = 30;
+d[1].op = 3;
+d[1].r = 8;
+/ wire
+d[2].op = 1;
+d[2].x = 319;
+d[2].y = 30;
+d[3].op = 2;
+d[3].x = 544;
+d[3].y = 160;
+/ pendulum ball
+d[4].op = 1;
+d[4].x = 544;
+d[4].y = 160;
+d[5].op = 3;
+d[5].r = 30;
+/ segments
+/ anchor ball
+s[0].start = 0;
+s[0].size = 2;
+s[0].visible = 1;
+/ wire
+s[1].start = s[0].start + s[0].size;
+s[1].size = 2;
+s[1].visible = 1;
+/ pendulum ball
+s[2].start = s[1].start + s[1].size;
+s[2].size = 2;
+s[2].visible = 1;
+/ animation
+while (true)
+{
+dfileinterpret(s[1], d, false);
+dfileinterpret(s[0], d, false);
+dfileinterpret(s[2], d, false);
+delay(15);
+dfileinterpret(s[0], d, true);
+dfileinterpret(s[1], d, true);
+dfileinterpret(s[2], d, true);
+swing(d);
+}
+}
+void dfileinterpret(seg s, dfile d[], bool erase)
+{
+Line l1;
+Circle c1;
+int color;
+if (erase)
+setcolor(0);
+else
+setcolor(RED);
+color = getcolor();
+for (int i = s.start; i < s.start + s.size + 1; i +)
+{
+/ setting pointer
+if (d[i].op = 1)
+{
+penx = d[i].x;
+peny = d[i].y;
+}
+/ drawing line
+if (d[i].op = 2)
+{
+l1.bresenhamLine(penx, peny + 8, d[i].x, d[i].y - 30, color);
+penx = d[i].x;
+peny = d[i].y;
+}
+/ drawing coloured circle
+if (d[i].op = 3)
+{
+c1.bresenhamCircle(penx, peny, d[i].r, color);
+}
+}
+}
+void swing(dfile d[])
+{
+int x = d[3].x;
+int y = d[3].y;
+if (x = pivotx + abs(len * sin(thetamax)))
+{
+xsign = -1;
+ysign *= -1;
+x = xmax - 1;
+delay(40);
+}
+else if (x = pivotx - abs(len * sin(thetamax)))
+{
+ysign *= -1;
+xsign = 1;
+x = (int)(pivotx - abs(len * sin(thetamax)) + 2);
+delay(40);
+}
+else if (y = pivoty + len)
+{
+ysign *= -1;
+}
+omega = y / 60 * PI / 180;
+decr = xsign * omega;
+theta = theta + decr;
+x = (int)(pivotx + len * sin(theta));
+y = (int)(pivoty + len * cos(theta));
+d[3].x = d[4].x = x;
+d[3].y = d[4].y = y;
+}
+LINE.H:
+#include <graphics.h>
+#include <time.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+class Line
+{
+public:
+void bresenhamLine(int, int, int, int, int);
+};
+void Line :bresenhamLine(int x1, int y1, int x2, int y2, int colour)
+{
+int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+dx = x2 - x1;
+dy = y2 - y1;
+dx1 = abs(dx);
+dy1 = abs(dy);
+px = 2 * dy1 - dx1;
+py = 2 * dx1 - dy1;
+if (dy1 = dx1)
+{
+if (dx = 0)
+{
+x = x1;
+y = y1;
+xe = x2;
+}
+else
+{
+x = x2;
+y = y2;
+xe = x1;
+}
+putpixel(x, y, colour);
+for (i = 0; x < xe; i +)
+{
+x = x + 1;
+if (px < 0)
+{
+px = px + 2 * dy1;
+}
+else
+{
+if ((dx < 0 & dy < 0) | (dx > 0 & dy > 0))
+{
+y = y + 1;
+}
+else
+{
+y = y - 1;
+}
+px = px + 2 * (dy1 - dx1);
+}
+putpixel(x, y, colour);
+}
+}
+else
+{
+if (dy = 0)
+{
+x = x1;
+y = y1;
+ye = y2;
+}
+else
+{
+x = x2;
+y = y2;
+ye = y1;
+}
+putpixel(x, y, colour);
+for (i = 0; y < ye; i +)
+{
+y = y + 1;
+if (py = 0)
+{
+py = py + 2 * dx1;
+}
+else
+{
+if ((dx < 0 & dy < 0) | (dx > 0 & dy > 0))
+{
+x = x + 1;
+}
+else
+{
+x = x - 1;
+}
+py = py + 2 * (dx1 - dy1);
+}
+putpixel(x, y, colour);
+}
+}
+}
+CIRCLE.H
+#include <graphics.h>
+#include <time.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+class Circle
+{
+public

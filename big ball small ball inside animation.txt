@@ -1,0 +1,91 @@
+#include <graphics.h>
+#include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+using namespace std;
+
+void drawCirclePoints(int cx, int cy, int x, int y)
+{
+    int color = getcolor();
+    putpixel(cx + x, cy + y, color);
+    putpixel(cx - x, cy + y, color);
+    putpixel(cx + x, cy - y, color);
+    putpixel(cx - x, cy - y, color);
+    putpixel(cx + y, cy + x, color);
+    putpixel(cx - y, cy + x, color);
+    putpixel(cx + y, cy - x, color);
+    putpixel(cx - y, cy - x, color);
+}
+
+void bresenhamCircle(int centerX, int centerY, int radius)
+{
+    int x = 0;
+    int y = radius;
+    int decision = 3 - 2 * radius;
+
+    drawCirclePoints(centerX, centerY, x, y);
+
+    while (x <= y)
+    {
+        x++;
+
+        if (decision < 0)
+            decision = decision + 4 * x + 6;
+        else
+        {
+            y--;
+            decision = decision + 4 * (x - y) + 10;
+        }
+
+        drawCirclePoints(centerX, centerY, x, y);
+    }
+}
+
+void slidePattern(int xc, int yc, int r1, int r2, int alpha, float p, int COL)
+{
+    setcolor(COL);
+    float t = 3.14 / 180;
+    float t1, t2, d;
+    float angle = (p * alpha);
+
+    t1 = cos(t * fmod(angle, 360));
+    t2 = sin(t * fmod(angle, 360));
+    t1 *= t1;
+    t2 *= t2;
+    t1 = t1 / (r2 * r2);
+    t2 = t2 / (r2 * r2);
+    d = sqrt(t1 + t2);
+    d = 1 / d;
+
+    int draw_x = xc + (r1 - d) * cos(t * alpha);
+    int draw_y = yc - (r1 - d) * sin(t * alpha);
+    bresenhamCircle(draw_x, draw_y, d);
+}
+
+void circleovercircle(int xc, int yc, int r1, int r2)
+{
+    float theta = 0;
+    double p1;
+    p1 = sqrt((r2 * r2)) / r1;
+    p1 = 1 / (p1);
+    for (;; theta -= 1)
+    {
+        slidePattern(xc, yc, r1, r2, theta, p1, WHITE);
+        bresenhamCircle(xc, yc, r1);
+        delay(25);
+        slidePattern(xc, yc, r1, r2, theta, p1, BLACK);
+    }
+}
+
+int main()
+{
+    int gd = DETECT, gm;
+    initwindow(640, 480);
+    int maxx = getmaxx();
+    int maxy = getmaxy();
+    circleovercircle(maxx / 2, maxy / 2, 100, 40);
+    closegraph();
+    return 0;
+}

@@ -1,0 +1,69 @@
+#include<graphics.h>
+#include<stdio.h>
+#include<math.h>
+#define PI 3.14
+
+int gd=DETECT,gm;
+int pivotx,pivoty;
+double thetamax,theta;;
+double len=260;
+int x,y,ymax,xmax;
+int bobradius=30;
+int xsign=-1,ysign=1;
+double omega;
+
+void paint()
+{
+cleardevice();
+setcolor(RED);
+fillellipse(pivotx,pivoty,8,8);
+line(pivotx,pivoty, x,y);
+fillellipse(x,y,bobradius,bobradius);
+}
+
+void main()
+{
+ double decr;
+ initgraph(&gd,&gm,"C:\\TURBOC3\\BGI\\");
+ thetamax=60*PI/180;
+ pivotx=getmaxx()/2;
+ pivoty=30;
+ ymax=(int) (pivoty+len*cos(thetamax));
+ xmax=(int) (pivotx+len*sin(thetamax));
+ x=xmax;
+        y=ymax;
+        theta=thetamax;
+
+while(1)
+      {
+      if(x>=pivotx+abs(len*sin(thetamax)))
+        {
+        xsign=-1;
+ ysign*=-1;
+        x=xmax-1;
+        delay(40);
+        }
+      else if(x<=pivotx-abs(len*sin(thetamax)))
+      {
+          ysign*=-1;
+          xsign=1;
+          x=(int) (pivotx-abs(len*sin(thetamax))+2);
+          delay(40);
+      }
+      else if(y>=pivoty+len)
+ {
+              ysign*=-1;
+        }
+
+      omega=y/60*PI/180;
+      decr=xsign*omega;
+      theta=theta+decr;
+      x=(int) (pivotx+len*sin(theta));
+      y=(int) (pivoty+len*cos(theta));
+      paint();
+      delay(40);
+    
+
+    }
+
+} 

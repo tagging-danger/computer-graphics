@@ -1,0 +1,74 @@
+#include<stdio.h>
+#include<time.h>
+#include<conio.h>
+#include<graphics.h>
+#include<stdlib.h>
+#include<math.h>
+//#include"asgn7.cpp"
+
+void fractal(int, int, int, int, int, int);
+
+time_t t;
+int sval = (unsigned)time(&t);
+
+int main() {
+ 	srand(sval);
+ 	int gm, gd = DETECT, x1, x2, y1, y2, ic;
+ 	initgraph(&gd, &gm, " ");
+
+ 	printf("enter x1 and y1:\n");
+ 	scanf("%d%d", &x1, &y1);
+ 	printf("enter x2 and y2:\n");
+ 	scanf("%d%d", &x2, &y2);
+ 	printf("enter number of iterations\n");
+ 	scanf("%d", &ic);
+
+ 	fractal(x1, y1, x2, y2, 0, ic);
+
+ 	getch();
+ 	closegraph();
+ 	return 0;
+}
+
+void fractal(int x1, int y1, int x2, int y2, int it, int ic) {
+ 	int m, g = 1, dx, dy, m1, m2, len, dev;
+ 	float gauss;
+
+ 	if(it == ic)  {
+ 	 	line(x1, y1, x2, y2);
+ 	 	return;
+ 	}
+ 	dx = (x2 - x1);
+ 	dy = (y2 - y1);
+ 	m1 = (x1 + x2) / 2;
+ 	m2 = (y1 + y2) / 2;
+ 	len = sqrt((dx * dx) + (dy * dy));
+
+ 	gauss = rand() % 10;
+ 	gauss = gauss / 50;
+ 	int r = rand() % 2;
+
+ 	if(r == 1) {
+ 	 	dev = len * g * gauss;
+ 	}
+ 	else {
+ 	 	dev = (len * g * gauss) * (-1);
+ 	}
+
+ 	//m2 = m2 + dev;
+ 	//m1 = m1 + dev;
+
+
+ 	if(dx > dy) {
+        // Deviation added
+ 	 	m2 = m2 + dev;
+    }
+ 	else {
+        // Deviation added
+ 	 	m1 = m1 + dev;
+ 	}
+
+ 	fractal(x1, y1, m1, m2, it + 1, ic);
+ 	fractal(m1, m2, x2, y2, it + 1, ic);
+}
+
